@@ -4,12 +4,33 @@
 
 --------------------------
 
+## 编译
+
+Linux ARM:
+
+```
+env GOOS=linux GOARCH=arm go build -o myddns -mod=vendor 
+```
+
+Linux ARM64: 
+
+```
+env GOOS=linux GOARCH=arm64 go build -o myddns -mod=vendor 
+```
+
+Linux AMD64: 
+
+```
+env GOOS=linux GOARCH=amd64 go build -o myddns -mod=vendor 
+```
+
+
 ## 使用
 
 启动时 指定`access id` 和 `access key`
 
 ```
-./ddns --accessId xxx --accessKey xxxx --domain my.domain.com --refresh 30
+./myddns --accessId xxx --accessKey xxxx --domain my.domain.com --refresh 30
 ```
 
 参数说明：
