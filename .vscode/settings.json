@@ -1,0 +1,13 @@
+{
+    "go.testEnvVars": {
+        // "ProjectPWD": "${workspaceRoot}"
+    },
+    "go.testFlags": [
+        "-v",
+        "-count=1",
+        // "-ldflags",
+        // "-X 'github.com/huyinghuan/ddns/ialidns.AccessKeyID='"
+        // "-X 'github.com/huyinghuan/ddns/ialidns.AccessKeySecret='"
+    ],
+    "go.testTimeout": "300s",
+}
