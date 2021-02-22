@@ -15,10 +15,10 @@
 参数说明：
 
 ```
-accessId: aliyun access id #注意创建的ram用户需要给aliyun dns 访问权限
-accessKey: aliyun access key
-domain:  需要解析的域名
-refresh: 刷新检查ip间隔 30s
+accessId: aliyun access id #注意创建的ram用户需要给aliyun dns 访问权限 必须
+accessKey: aliyun access key #必须
+domain:  需要解析的域名 #必须
+refresh: 刷新检查ip间隔 30s #可选
 
 ```
 

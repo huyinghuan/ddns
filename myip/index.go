@@ -1,13 +1,19 @@
 package myip
 
 import (
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
-	"log"
+	"net"
 	"net/http"
 )
 
-func GetMyIp() (string, error) {
-	resp, err := http.Get("https://www.taobao.com/help/getip.php")
+func isIP(ip string) bool {
+	return net.ParseIP(ip) != nil
+}
+
+func GetMyIP1() (string, error) {
+	resp, err := http.Get("https://api.ipify.org?format=json")
 	if err != nil {
 		return "", err
 	}
@@ -16,6 +22,41 @@ func GetMyIp() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	log.Println(string(body))
-	return "", err
+	var result map[string]interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return "", err
+	}
+	if v, ok := result["ip"]; ok {
+		if vv, ok := v.(string); ok {
+			if isIP(vv) {
+				return vv, nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("解析接口结果失败:%s", string(body))
+}
+
+func GetMyIP2() (string, error) {
+	resp, err := http.Get("https://ip.cn/api/index?type=0&ip=")
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	var result map[string]interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return "", err
+	}
+	if v, ok := result["ip"]; ok {
+		if vv, ok := v.(string); ok {
+			if isIP(vv) {
+				return vv, nil
+			}
+		}
+	}
+	return "", fmt.Errorf("解析接口结果失败:%v", result["ip"])
 }
