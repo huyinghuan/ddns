@@ -73,8 +73,9 @@ func main() {
 				log.Println(err)
 			} else {
 				lastestIp = ip
-				log.Printf("解析成功: %s  %s", ip, domainName)
 			}
+		} else {
+			log.Println("地址未发生变化:", ip)
 		}
 		<-timer.C
 	}
