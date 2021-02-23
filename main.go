@@ -72,8 +72,6 @@ func main() {
 			} else {
 				lastestIp = ip
 			}
-		} else {
-			log.Println("地址未发生变化:", ip)
 		}
 		<-timer.C
 	}
