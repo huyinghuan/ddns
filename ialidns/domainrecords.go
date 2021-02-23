@@ -2,6 +2,7 @@ package ialidns
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
@@ -38,6 +39,9 @@ func AddDomainRecord(domain Domain) error {
 	request.Type = "A"
 	request.RR = domain.RR
 	_, err := client.AddDomainRecord(request)
+	if err == nil {
+		log.Println("增加解析记录成功:", domain.RR, domain.IP)
+	}
 	return err
 }
 
@@ -63,6 +67,9 @@ func UpdateDomainRecord(id string, domain Domain) error {
 	request.Type = "A"
 	request.RR = domain.RR
 	_, err := client.UpdateDomainRecord(request)
+	if err == nil {
+		log.Println("修改解析记录成功:", domain.RR, domain.IP)
+	}
 	return err
 }
 
@@ -73,7 +80,7 @@ func AddOrUpdateDomain(domain Domain) error {
 	}
 	for _, record := range records {
 		if record.RR == domain.RR {
-			// ip 没有辩护，不需要重新解析
+			// ip 没有变化，不需要重新解析
 			if record.Value == domain.IP {
 				return nil
 			}
