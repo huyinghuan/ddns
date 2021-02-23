@@ -27,6 +27,8 @@ env GOOS=linux GOARCH=amd64 go build -o myddns -mod=vendor
 
 ## 使用
 
+部署在家庭局域网内任意服务器上【树莓派或者路由器】
+
 启动时 指定`access id` 和 `access key`
 
 ```
@@ -42,6 +44,34 @@ domain:  需要解析的域名 #必须
 refresh: 刷新检查ip间隔 30s #可选
 
 ```
+
+  可以使用`systemd`进行进程管理, 新建文件`/etc/systemd/system/myddns.service`
+  
+```
+[Unit]
+Description=MyDDNS
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/ddns # 注意修改为实际二进制可执行文件所在的目录
+ExecStart=/opt/ddns/myddns_arm --accessId xxxx --accessKey xx --domain my.domain.com #  注意修改为实际二进制可执行文件的路径
+RestartSec=2
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+`systemd`启动服务
+```
+sudo systemctl enable myddns
+sudo systemctl start myddns
+
+#查看下启动是否成功
+journalctl -u myddns.service -f  #  结束日志查看 ctrl+c
+```
+
+
 
 
 ### 参考
