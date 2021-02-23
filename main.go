@@ -54,7 +54,7 @@ func main() {
 		log.Fatalf("域名配置错误: %s", config.Domain)
 	}
 
-	timer := time.NewTimer(time.Duration(fresh) * time.Second)
+	timer := time.NewTicker(time.Duration(fresh) * time.Second)
 	lastestIp := ""
 	for {
 		ip := ""
