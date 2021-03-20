@@ -58,7 +58,9 @@ func main() {
 	lastestIp := ""
 	for {
 		ip := ""
-		if ipAddr, err := myip.GetMyIP1(); err == nil {
+		if ipAddr, err := myip.GetMyIP(); err == nil {
+			ip = ipAddr
+		} else if ipAddr, err = myip.GetMyIP1(); err == nil {
 			ip = ipAddr
 		} else if ipAddr, err = myip.GetMyIP2(); err == nil {
 			ip = ipAddr
