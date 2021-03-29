@@ -13,11 +13,22 @@ import (
 var Version = "v1.0.0"
 var BuildTime = "Dev"
 
+type LastIpRecord struct {
+	IP         string
+	RecordTime time.Time
+}
+
+var lastIPMap = make(map[string]LastIpRecord)
+
 func setDNS(domains string, ip string) {
 	list := strings.Split(domains, ",")
 	for _, item := range list {
 		item = strings.TrimSpace(item)
 		if item == "" {
+			continue
+		}
+		//时间内10分钟，ip没有不用查阿里云接口
+		if v, ok := lastIPMap[item]; ok && v.IP == ip && v.RecordTime.Add(10*time.Minute).After(time.Now()) {
 			continue
 		}
 		domain, err := ialidns.Parse(item)
@@ -27,11 +38,20 @@ func setDNS(domains string, ip string) {
 			continue
 		}
 		if hasChange, err := ialidns.AddOrUpdateDomain(domain); err != nil {
-			log.Fatalf("域名更新失败: %s \n", item)
 			log.Println(err)
+			log.Printf("域名更新失败: %s \n", item)
 			continue
 		} else if hasChange {
+			lastIPMap[item] = LastIpRecord{
+				IP:         ip,
+				RecordTime: time.Now(),
+			}
 			log.Printf("域名: %s 更新成功! \n", domain.DomainName)
+		} else {
+			lastIPMap[item] = LastIpRecord{
+				IP:         ip,
+				RecordTime: time.Now(),
+			}
 		}
 	}
 }
@@ -74,7 +94,6 @@ func main() {
 	log.Printf("监控ip变动间隔: %ds  目标域名:\n   -- %s \n", config.Refresh, strings.Join(strings.Split(config.Domain, ","), "\n   -- "))
 
 	timer := time.NewTicker(time.Duration(fresh) * time.Second)
-	lastestIp := ""
 	for {
 		ip := ""
 		if ipAddr, err := myip.GetMyIP(); err == nil {
@@ -86,9 +105,8 @@ func main() {
 		}
 		if ip == "" {
 			log.Println("获取本机ip失败")
-		} else if ip != lastestIp {
-			setDNS(config.Domain, ip)
 		}
+		setDNS(config.Domain, ip)
 		<-timer.C
 	}
 }
