@@ -10,9 +10,10 @@ import (
 )
 
 type Domain struct {
-	DomainName string
-	RR         string
-	IP         string
+	DomainName   string
+	RR           string
+	IP           string
+	OriginDomain string
 }
 
 /**
@@ -40,7 +41,7 @@ func AddDomainRecord(domain Domain) error {
 	request.RR = domain.RR
 	_, err := client.AddDomainRecord(request)
 	if err == nil {
-		log.Println("增加解析记录成功:", domain.RR, domain.IP)
+		log.Println("增加解析记录:", domain.OriginDomain, domain.IP)
 	}
 	return err
 }
@@ -54,8 +55,9 @@ func Parse(domain string) (Domain, error) {
 	domainName := strings.Join(arr[len(arr)-2:], ".")
 	rr := strings.Join(arr[0:len(arr)-2], ".")
 	return Domain{
-		DomainName: domainName,
-		RR:         rr,
+		DomainName:   domainName,
+		RR:           rr,
+		OriginDomain: domain,
 	}, nil
 }
 
@@ -68,24 +70,26 @@ func UpdateDomainRecord(id string, domain Domain) error {
 	request.RR = domain.RR
 	_, err := client.UpdateDomainRecord(request)
 	if err == nil {
-		log.Println("修改解析记录成功:", domain.RR, domain.IP)
+		log.Println("修改解析记录成功:", domain.OriginDomain, domain.IP)
 	}
 	return err
 }
 
-func AddOrUpdateDomain(domain Domain) error {
+// AddOrUpdateDomain
+// @return isChange error
+func AddOrUpdateDomain(domain Domain) (bool, error) {
 	records, err := GetDomainRecords(domain.DomainName)
 	if err != nil {
-		return err
+		return false, err
 	}
 	for _, record := range records {
 		if record.RR == domain.RR {
 			// ip 没有变化，不需要重新解析
 			if record.Value == domain.IP {
-				return nil
+				return false, nil
 			}
-			return UpdateDomainRecord(record.RecordId, domain)
+			return true, UpdateDomainRecord(record.RecordId, domain)
 		}
 	}
-	return AddDomainRecord(domain)
+	return true, AddDomainRecord(domain)
 }

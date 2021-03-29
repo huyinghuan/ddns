@@ -26,12 +26,13 @@ func setDNS(domains string, ip string) {
 			log.Printf("域名配置错误: %s \n", item)
 			continue
 		}
-		if err := ialidns.AddOrUpdateDomain(domain); err != nil {
+		if hasChange, err := ialidns.AddOrUpdateDomain(domain); err != nil {
 			log.Fatalf("域名更新失败: %s \n", item)
 			log.Println(err)
 			continue
+		} else if hasChange {
+			log.Printf("域名: %s 更新成功! \n", domain.DomainName)
 		}
-		log.Printf("域名: %s 更新成功! \n", domain.DomainName)
 	}
 }
 
@@ -70,7 +71,7 @@ func main() {
 		log.Fatalln("关键参数不能为空: accessId, accessKey, domain")
 	}
 
-	log.Printf("监控ip变动间隔: %ds  目标域名: %s\n", config.Refresh, config.Domain)
+	log.Printf("监控ip变动间隔: %ds  目标域名:\n   -- %s \n", config.Refresh, strings.Join(strings.Split(config.Domain, ","), "\n   -- "))
 
 	timer := time.NewTicker(time.Duration(fresh) * time.Second)
 	lastestIp := ""
