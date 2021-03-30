@@ -39,14 +39,14 @@ func setDNS(domains string, ip string) {
 		}
 		if hasChange, err := ialidns.AddOrUpdateDomain(domain); err != nil {
 			log.Println(err)
-			log.Printf("域名更新失败: %s \n", item)
+			log.Printf("域名: %s 更新失败 \n", item)
 			continue
 		} else if hasChange {
 			lastIPMap[item] = LastIpRecord{
 				IP:         ip,
 				RecordTime: time.Now(),
 			}
-			log.Printf("域名: %s 更新成功! \n", domain.DomainName)
+			log.Printf("解析成功: %s ==> %s \n", domain.OriginDomain, domain.IP)
 		} else {
 			lastIPMap[item] = LastIpRecord{
 				IP:         ip,
