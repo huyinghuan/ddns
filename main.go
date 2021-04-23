@@ -65,13 +65,11 @@ func main() {
 
 	var fresh int
 	flag.IntVar(&fresh, "refresh", 30, "监控ip变动时间间隔【建议30s以上，30s】")
-
 	flag.Parse()
-
 	log.Println("Program Version  : ", Version)
 	log.Println("Program BuildTime: ", BuildTime)
 	log.Println("Program Author   : ", "ec.huyinghuan@gmail.com")
-
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 	config := ialidns.GetConfig()
 
 	if accessId != "" {
