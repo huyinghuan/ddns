@@ -1,4 +1,4 @@
-package ialidns
+package cloud
 
 import (
 	"encoding/json"

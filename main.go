@@ -6,7 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/huyinghuan/ddns/ialidns"
+	"github.com/huyinghuan/ddns/cloud"
+	"github.com/huyinghuan/ddns/config"
 	"github.com/huyinghuan/ddns/myip"
 )
 
@@ -20,47 +21,24 @@ type LastIpRecord struct {
 
 var lastIPMap = make(map[string]LastIpRecord)
 
-func setDNS(domains string, ip string) {
-	list := strings.Split(domains, ",")
-	for _, item := range list {
-		item = strings.TrimSpace(item)
-		if item == "" {
-			continue
-		}
-		//时间内10分钟，ip没有不用查阿里云接口
-		if v, ok := lastIPMap[item]; ok && v.IP == ip && v.RecordTime.Add(10*time.Minute).After(time.Now()) {
-			continue
-		}
-		domain, err := ialidns.Parse(item)
-		domain.IP = ip
-		if err != nil {
-			log.Printf("域名配置错误: %s \n", item)
-			continue
-		}
-		if hasChange, err := ialidns.AddOrUpdateDomain(domain); err != nil {
-			log.Println(err)
-			log.Printf("域名: %s 更新失败 \n", item)
-			continue
-		} else if hasChange {
-			lastIPMap[item] = LastIpRecord{
-				IP:         ip,
-				RecordTime: time.Now(),
-			}
-			log.Printf("解析成功: %s ==> %s \n", domain.OriginDomain, domain.IP)
-		} else {
-			lastIPMap[item] = LastIpRecord{
-				IP:         ip,
-				RecordTime: time.Now(),
-			}
-		}
-	}
-}
-
 func main() {
-	var accessId, accessKey, domainName string
+	// 阿里云配置
+	var accessId, accessKey string
+	// name.com 配置: https://www.name.com/zh-cn/api-docs
+	var username, token string
+	//  域名
+	var domainName string
+
+	var cloudName string
+
+	flag.StringVar(&cloudName, "cloud", "aliyun", "云服务商，支持: aliyun, name.com")
 
 	flag.StringVar(&accessId, "accessId", "", "阿里云access id")
 	flag.StringVar(&accessKey, "accessKey", "", "阿里云access key")
+
+	flag.StringVar(&username, "username", "", "name.com 用户名")
+	flag.StringVar(&token, "token", "", "name.com token")
+
 	flag.StringVar(&domainName, "domain", "", "目标域名, 多个域名用逗号隔开")
 
 	var fresh int
@@ -70,26 +48,54 @@ func main() {
 	log.Println("Program BuildTime: ", BuildTime)
 	log.Println("Program Author   : ", "ec.huyinghuan@gmail.com")
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-	config := ialidns.GetConfig()
 
-	if accessId != "" {
-		config.AccessKeyID = accessId
+	// config := ialidns.GetConfig()
+	conf := config.Config{
+		Aliyun:  config.AliyunConfig{},
+		NameCom: config.NameComConfig{},
+		Refresh: 30,
 	}
-	if accessKey != "" {
-		config.AccessKeySecret = accessKey
-	}
-	if domainName != "" {
-		config.Domain = domainName
-	}
+
+	conf.Aliyun.AccessKeyID = accessId
+	conf.Aliyun.AccessKeySecret = accessKey
+	conf.NameCom.Username = username
+	conf.NameCom.Token = token
+
 	if fresh > 1 {
-		config.Refresh = fresh
+		conf.Refresh = fresh
+	}
+	if domainName == "" {
+		log.Fatalln("关键参数不能为空: domain")
 	}
 
-	if config.AccessKeyID == "" || config.AccessKeySecret == "" || config.Domain == "" {
-		log.Fatalln("关键参数不能为空: accessId, accessKey, domain")
+	tmpList := strings.Split(domainName, ",")
+	targetDomainList := []string{}
+	for _, item := range tmpList {
+		item = strings.TrimSpace(item)
+		if item == "" {
+			continue
+		}
+		if _, err := cloud.ParseDomain(item); err != nil {
+			log.Fatalln("域名配置错误:" + item)
+		}
+		targetDomainList = append(targetDomainList, item)
 	}
 
-	log.Printf("监控ip变动间隔: %ds  目标域名:\n   -- %s \n", config.Refresh, strings.Join(strings.Split(config.Domain, ","), "\n   -- "))
+	var cloudServer cloud.CloudServer
+
+	if cloudName == "aliyun" {
+		if conf.Aliyun.AccessKeyID == "" || conf.Aliyun.AccessKeySecret == "" {
+			log.Fatalln("关键参数不能为空: accessId, accessKey")
+		}
+		cloudServer = cloud.CreateAliyun(conf.Aliyun)
+	} else if cloudName == "name.com" {
+		if conf.NameCom.Username == "" || conf.NameCom.Token == "" {
+			log.Fatalln("关键参数不能为空: username, token")
+		}
+		cloudServer = cloud.CreateNameCom(conf.NameCom)
+	}
+
+	log.Printf("服务商: %s 监控ip变动间隔: %ds  目标域名:\n   -- %s \n", cloudName, conf.Refresh, strings.Join(targetDomainList, "\n   -- "))
 
 	timer := time.NewTicker(time.Duration(fresh) * time.Second)
 	for {
@@ -104,7 +110,32 @@ func main() {
 		if ip == "" {
 			log.Println("获取本机ip失败")
 		}
-		setDNS(config.Domain, ip)
+
+		for _, item := range targetDomainList {
+			//时间内10分钟，ip没有不用查阿里云接口
+			if v, ok := lastIPMap[item]; ok && v.IP == ip && v.RecordTime.Add(10*time.Minute).After(time.Now()) {
+				continue
+			}
+			domain, _ := cloud.ParseDomain(item)
+			domain.IP = ip
+			if hasChange, err := cloudServer.AddOrUpdateDomain(domain); err != nil {
+				log.Println(err)
+				log.Printf("域名: %s 更新失败 \n", item)
+				continue
+			} else if hasChange {
+				lastIPMap[item] = LastIpRecord{
+					IP:         ip,
+					RecordTime: time.Now(),
+				}
+				log.Printf("解析成功: %s ==> %s \n", domain.OriginDomain, domain.IP)
+			} else {
+				lastIPMap[item] = LastIpRecord{
+					IP:         ip,
+					RecordTime: time.Now(),
+				}
+			}
+		}
+
 		<-timer.C
 	}
 }
