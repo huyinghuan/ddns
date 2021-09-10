@@ -1,6 +1,9 @@
 ## 阿里云 DNS 动态解析
 
-家里的宽带开通了公网ip，想进行域名解析， 但是路由器有没有ddns功能，因此创建该项目， 利用阿里云注册的备案域名和域名解析API，进行动态域名解析
+家里的宽带开通了公网ip，想进行域名解析，利用域名服务商提供的api，进行动态解析。 
+
+支持：阿里云域名， name.com
+
 
 --------------------------
 
@@ -27,22 +30,42 @@ env GOOS=linux GOARCH=amd64 go build -o myddns -mod=vendor
 
 ## 使用
 
-部署在家庭局域网内任意服务器上【树莓派或者路由器】
+部署在家庭局域网内任意服务器上【树莓派或者路由器】。
 
-启动时 指定`access id` 和 `access key`
+查看帮助:
 
 ```
-./myddns --accessId xxx --accessKey xxxx --domain my.domain.com --refresh 30
+./myddns -h
+```
+
+阿里云域名：
+
+```
+./myddns --cloud aliyun --accessId xxx --accessKey xxxx --domain my.domain.com --refresh 30
+```
+
+name.com域名：
+
+```
+./myddns --cloud name.com --user xxx --token xxxx --domain my.domain.com --refresh 30
 ```
 
 参数说明：
 
 ```
-accessId: aliyun access id #注意创建的ram用户需要给aliyun dns 访问权限 必须
-accessKey: aliyun access key #必须
+cloud: 服务商 [可选]域名服务商，支持: aliyun name.com , 默认为aliyun
+
+// aliyun 配置
+accessId:  aliyun access id    #注意创建的ram用户需要给aliyun dns 访问权限 必须
+accessKey: aliyun access key 
+
+// name.com 配置
+user: 用户名
+token： token 见: https://www.name.com/zh-cn/account/settings/api
+
+
 domain:  需要解析的域名 #必须
 refresh: 刷新检查ip间隔 30s #可选
-
 ```
 
   可以使用`systemd`进行进程管理, 新建文件`/etc/systemd/system/myddns.service`
@@ -62,7 +85,9 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 ```
+
 `systemd`启动服务
+
 ```
 sudo systemctl enable myddns
 sudo systemctl start myddns
@@ -71,12 +96,7 @@ sudo systemctl start myddns
 journalctl -u myddns.service -f  #  结束日志查看 ctrl+c
 ```
 
-
-
-
 ### 参考
 
-https://help.aliyun.com/knowledge_detail/39863.html?spm=a2c4g.11186623.6.624.12f91550pQYrFU
-
-
-
+- aliyun: https://help.aliyun.com/knowledge_detail/39863.html?spm=a2c4g.11186623.6.624.12f91550pQYrFU
+- name.com: https://www.name.com/zh-cn/api-docs/

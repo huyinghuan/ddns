@@ -31,7 +31,7 @@ func main() {
 
 	var cloudName string
 
-	flag.StringVar(&cloudName, "cloud", "aliyun", "云服务商，支持: aliyun, name.com")
+	flag.StringVar(&cloudName, "cloud", "aliyun", "[可选]域名服务商，支持: aliyun name.com , 默认为aliyun")
 
 	flag.StringVar(&accessId, "accessId", "", "阿里云access id")
 	flag.StringVar(&accessKey, "accessKey", "", "阿里云access key")
@@ -82,7 +82,9 @@ func main() {
 	}
 
 	var cloudServer cloud.CloudServer
-
+	if cloudName == "" {
+		cloudName = "aliyun"
+	}
 	if cloudName == "aliyun" {
 		if conf.Aliyun.AccessKeyID == "" || conf.Aliyun.AccessKeySecret == "" {
 			log.Fatalln("关键参数不能为空: accessId, accessKey")
@@ -93,6 +95,8 @@ func main() {
 			log.Fatalln("关键参数不能为空: username, token")
 		}
 		cloudServer = cloud.CreateNameCom(conf.NameCom)
+	} else {
+		log.Fatalln("不支持该域名服务商")
 	}
 
 	log.Printf("服务商: %s 监控ip变动间隔: %ds  目标域名:\n   -- %s \n", cloudName, conf.Refresh, strings.Join(targetDomainList, "\n   -- "))

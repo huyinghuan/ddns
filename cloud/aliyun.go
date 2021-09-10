@@ -60,9 +60,6 @@ func (cloud *InsideAliyun) UpdateDomainRecord(id string, domain Domain) error {
 // AddOrUpdateDomain
 // @return isChange error
 func (cloud *InsideAliyun) AddOrUpdateDomain(domain Domain) (bool, error) {
-	// if insideAliyun == nil {
-
-	// }
 	records, err := cloud.GetDomainRecords(domain.DomainName)
 	if err != nil {
 		return false, err

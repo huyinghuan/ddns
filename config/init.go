@@ -8,6 +8,7 @@ type AliyunConfig struct {
 type NameComConfig struct {
 	Username string
 	Token    string
+	API      string
 }
 
 type Config struct {

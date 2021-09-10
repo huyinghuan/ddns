@@ -16,7 +16,6 @@ type NameComItem struct {
 	ID     int64  `json:"id,omitempty"`
 	Domain string `json:"domainName,omitempty"`
 	Host   string `json:"host,omitempty"`
-	RR     string `json:"fqdn,omitempty"`
 	Type   string `json:"type,omitempty"`
 	IP     string `json:"answer,omitempty"`
 	TTL    int    `json:"ttl,omitempty"`
@@ -65,7 +64,7 @@ func (cloud *InsideNameCom) GetDomainRecords(domain string) ([]Domain, error) {
 	for _, record := range items.Records {
 		queue = append(queue, Domain{
 			RecordId:   strconv.FormatInt(record.ID, 10),
-			RR:         record.RR,
+			RR:         record.Host,
 			IP:         record.IP,
 			DomainName: record.Domain,
 		})
@@ -75,8 +74,7 @@ func (cloud *InsideNameCom) GetDomainRecords(domain string) ([]Domain, error) {
 func (cloud *InsideNameCom) AddDomainRecord(domain Domain) error {
 	api := fmt.Sprintf("%s/v4/domains/%s/records", cloud.API, domain.DomainName)
 	item := NameComItem{
-		Host: domain.DomainName,
-		RR:   domain.RR,
+		Host: domain.RR,
 		Type: "A",
 		IP:   domain.IP,
 		TTL:  300,
@@ -100,10 +98,9 @@ func (cloud *InsideNameCom) AddDomainRecord(domain Domain) error {
 	return nil
 }
 func (cloud *InsideNameCom) UpdateDomainRecord(id string, domain Domain) error {
-	api := fmt.Sprintf("%s/v4/domains/%s/records/%s", cloud.API, domain.DomainName, domain.RecordId)
+	api := fmt.Sprintf("%s/v4/domains/%s/records/%s", cloud.API, domain.DomainName, id)
 	item := NameComItem{
-		Host: domain.DomainName,
-		RR:   domain.RR,
+		Host: domain.RR,
 		Type: "A",
 		IP:   domain.IP,
 		TTL:  300,
@@ -145,8 +142,12 @@ func (cloud *InsideNameCom) AddOrUpdateDomain(domain Domain) (bool, error) {
 }
 
 func CreateNameCom(conf config.NameComConfig) *InsideNameCom {
+	api := "https://api.name.com"
+	if conf.API != "" {
+		api = conf.API
+	}
 	return &InsideNameCom{
-		API:      "https://api.name.com",
+		API:      api,
 		Username: conf.Username,
 		Token:    conf.Token,
 	}

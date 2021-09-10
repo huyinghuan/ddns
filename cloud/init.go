@@ -7,10 +7,10 @@ import (
 
 type Domain struct {
 	RecordId     string
-	DomainName   string
-	RR           string
+	DomainName   string // example.com
+	RR           string // www
 	IP           string
-	OriginDomain string
+	OriginDomain string // www.example.com
 }
 
 func ParseDomain(domain string) (Domain, error) {
