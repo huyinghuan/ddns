@@ -11,5 +11,14 @@ env GOOS=linux GOARCH=arm go build -o out/myddns_arm -mod=vendor -ldflags="-X '$
 env GOOS=linux GOARCH=arm64 go build -o out/myddns_arm64 -mod=vendor -ldflags="-X '$argsVersion' \
  -X '$argsBuildTime' "
 
- env GOOS=linux GOARCH=amd64 go build -o out/myddns_amd64 -mod=vendor -ldflags="-X '$argsVersion' \
+env GOOS=linux GOARCH=amd64 go build -o out/myddns_amd64 -mod=vendor -ldflags="-X '$argsVersion' \
+ -X '$argsBuildTime' "
+
+env GOOS=linux GOARCH=386 go build -o out/myddns_386 -mod=vendor -ldflags="-X '$argsVersion' \
+ -X '$argsBuildTime' "
+
+env GOOS=windows GOARCH=386 go build -o out/myddns_windows_386 -mod=vendor -ldflags="-X '$argsVersion' \
+ -X '$argsBuildTime' "
+
+env GOOS=windows GOARCH=amd64 go build -o out/myddns_windows_amd64 -mod=vendor -ldflags="-X '$argsVersion' \
  -X '$argsBuildTime' "
