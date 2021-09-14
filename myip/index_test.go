@@ -5,8 +5,8 @@ import (
 )
 
 func TestMyIP(t *testing.T) {
-	t.Log(GetMyIP1())
-	t.Log(GetMyIP2())
+	t.Log(getMyIP1())
+	t.Log(getMyIP2())
 }
 
 func TestIsIP(t *testing.T) {
