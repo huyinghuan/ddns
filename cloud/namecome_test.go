@@ -2,12 +2,10 @@ package cloud
 
 import (
 	"testing"
-
-	"github.com/huyinghuan/ddns/config"
 )
 
 func TestNameCome(t *testing.T) {
-	server := CreateNameCom(config.NameComConfig{
+	server := CreateNameCom(NameComConfig{
 		Username: "",
 		Token:    "",
 		API:      "https://api.name.com",

@@ -6,42 +6,48 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strconv"
-	"time"
+	"net/url"
 )
 
-type NameComItem struct {
-	ID     int64  `json:"id,omitempty"`
-	Domain string `json:"domainName,omitempty"`
-	Host   string `json:"host,omitempty"`
-	Type   string `json:"type,omitempty"`
-	IP     string `json:"answer,omitempty"`
-	TTL    int    `json:"ttl,omitempty"`
+type DNSPodResponseStatus struct {
+	Code string `json:"code"`
+	Msg  string `json:"message"`
 }
 
-type NameComItemList struct {
-	Records []NameComItem `json:"records"`
+type DNSPodItem struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+type DNSPodResponseDomain struct {
+	Name string `json:"name"`
+}
+type DNSPodResponse struct {
+	Status  DNSPodResponseStatus `json:"status"`
+	Records []DNSPodItem         `json:"records"`
+	Domain  DNSPodResponseDomain `json:"domain"`
 }
 
-type NameComError struct {
-	Message string `json:"message"`
-	Details string `json:"details"`
+type InsideDNSPod struct {
+	API   string
+	Token string
+	ID    string
 }
 
-type InsideNameCom struct {
-	API      string
-	Username string
-	Token    string
+func (cloud *InsideDNSPod) getPublicParams() url.Values {
+	params := url.Values{}
+	params.Set("login_token", cloud.Token)
+	params.Set("format", "json")
+	params.Set("error_on_empty", "no")
+	return params
 }
 
-var client = http.Client{
-	Timeout: 3 * time.Second,
-}
+func (cloud *InsideDNSPod) GetDomainRecords(domain string) ([]Domain, error) {
+	api := fmt.Sprintf("%s/Record.List", cloud.API)
 
-func (cloud *InsideNameCom) GetDomainRecords(domain string) ([]Domain, error) {
-	api := fmt.Sprintf("%s/v4/domains/%s/records", cloud.API, domain)
-	request, _ := http.NewRequest("GET", api, nil)
-	request.SetBasicAuth(cloud.Username, cloud.Token)
+	params := cloud.getPublicParams()
+	params.Set("domain", domain)
+	request, _ := http.NewRequest("POST", api, bytes.NewReader([]byte(params.Encode())))
 	response, err := client.Do(request)
 	if err != nil {
 		return nil, err
@@ -54,22 +60,25 @@ func (cloud *InsideNameCom) GetDomainRecords(domain string) ([]Domain, error) {
 	if response.StatusCode != 200 {
 		return nil, fmt.Errorf(string(body))
 	}
-	var items NameComItemList
-	if err := json.Unmarshal(body, &items); err != nil {
+	var dnsPodResponse DNSPodResponse
+	if err := json.Unmarshal(body, &dnsPodResponse); err != nil {
 		return nil, nil
 	}
+	if dnsPodResponse.Status.Code != "1" {
+		return nil, fmt.Errorf(dnsPodResponse.Status.Msg)
+	}
 	queue := []Domain{}
-	for _, record := range items.Records {
+	for _, record := range dnsPodResponse.Records {
 		queue = append(queue, Domain{
-			RecordId:   strconv.FormatInt(record.ID, 10),
-			RR:         record.Host,
-			IP:         record.IP,
-			DomainName: record.Domain,
+			RecordId:   record.ID,
+			RR:         record.Name,
+			IP:         record.Value,
+			DomainName: dnsPodResponse.Domain.Name,
 		})
 	}
 	return queue, nil
 }
-func (cloud *InsideNameCom) AddDomainRecord(domain Domain) error {
+func (cloud *InsideDNSPod) AddDomainRecord(domain Domain) error {
 	api := fmt.Sprintf("%s/v4/domains/%s/records", cloud.API, domain.DomainName)
 	item := NameComItem{
 		Host: domain.RR,
@@ -80,7 +89,7 @@ func (cloud *InsideNameCom) AddDomainRecord(domain Domain) error {
 	body, _ := json.Marshal(item)
 	request, _ := http.NewRequest("POST", api, bytes.NewReader(body))
 	request.Header.Set("Content-Type", "application/json")
-	request.SetBasicAuth(cloud.Username, cloud.Token)
+	//	request.SetBasicAuth(cloud.Username, cloud.Token)
 	response, err := client.Do(request)
 	if err != nil {
 		return err
@@ -95,7 +104,7 @@ func (cloud *InsideNameCom) AddDomainRecord(domain Domain) error {
 	}
 	return nil
 }
-func (cloud *InsideNameCom) UpdateDomainRecord(id string, domain Domain) error {
+func (cloud *InsideDNSPod) UpdateDomainRecord(id string, domain Domain) error {
 	api := fmt.Sprintf("%s/v4/domains/%s/records/%s", cloud.API, domain.DomainName, id)
 	item := NameComItem{
 		Host: domain.RR,
@@ -106,7 +115,7 @@ func (cloud *InsideNameCom) UpdateDomainRecord(id string, domain Domain) error {
 	body, _ := json.Marshal(item)
 	request, _ := http.NewRequest("PUT", api, bytes.NewReader(body))
 	request.Header.Set("Content-Type", "application/json")
-	request.SetBasicAuth(cloud.Username, cloud.Token)
+	//	request.SetBasicAuth(cloud.Username, cloud.Token)
 	response, err := client.Do(request)
 	if err != nil {
 		return err
@@ -122,7 +131,7 @@ func (cloud *InsideNameCom) UpdateDomainRecord(id string, domain Domain) error {
 	return nil
 }
 
-func (cloud *InsideNameCom) AddOrUpdateDomain(domain Domain) (bool, error) {
+func (cloud *InsideDNSPod) AddOrUpdateDomain(domain Domain) (bool, error) {
 	records, err := cloud.GetDomainRecords(domain.DomainName)
 	if err != nil {
 		return false, err
@@ -139,14 +148,14 @@ func (cloud *InsideNameCom) AddOrUpdateDomain(domain Domain) (bool, error) {
 	return true, cloud.AddDomainRecord(domain)
 }
 
-func CreateNameCom(conf NameComConfig) *InsideNameCom {
-	api := "https://api.name.com"
+func CreateDNSPod(conf DNSPodConfig) *InsideDNSPod {
+	api := "https://dnsapi.cn"
 	if conf.API != "" {
 		api = conf.API
 	}
-	return &InsideNameCom{
-		API:      api,
-		Username: conf.Username,
-		Token:    conf.Token,
+	return &InsideDNSPod{
+		API:   api,
+		Token: conf.LoginToken,
+		ID:    conf.ID,
 	}
 }

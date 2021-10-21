@@ -2,12 +2,10 @@ package cloud
 
 import (
 	"testing"
-
-	"github.com/huyinghuan/ddns/config"
 )
 
 func TestAliyun(t *testing.T) {
-	server := CreateAliyun(config.AliyunConfig{
+	server := CreateAliyun(AliyunConfig{
 		AccessKeyID:     "",
 		AccessKeySecret: "",
 	})

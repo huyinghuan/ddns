@@ -5,7 +5,6 @@ import (
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk/requests"
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/alidns"
-	"github.com/huyinghuan/ddns/config"
 )
 
 type InsideAliyun struct {
@@ -76,7 +75,7 @@ func (cloud *InsideAliyun) AddOrUpdateDomain(domain Domain) (bool, error) {
 	return true, cloud.AddDomainRecord(domain)
 }
 
-func CreateAliyun(conf config.AliyunConfig) *InsideAliyun {
+func CreateAliyun(conf AliyunConfig) *InsideAliyun {
 	client, err := alidns.NewClientWithAccessKey("cn-hangzhou", conf.AccessKeyID, conf.AccessKeySecret)
 	if err != nil {
 		log.Fatal(err)

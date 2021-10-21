@@ -1,4 +1,4 @@
-package config
+package cloud
 
 type AliyunConfig struct {
 	AccessKeyID     string
@@ -11,8 +11,15 @@ type NameComConfig struct {
 	API      string
 }
 
+type DNSPodConfig struct {
+	ID         string
+	LoginToken string
+	API        string
+}
+
 type Config struct {
 	Refresh int
 	Aliyun  AliyunConfig
 	NameCom NameComConfig
+	DNSPod  DNSPodConfig
 }

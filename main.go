@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/huyinghuan/ddns/cloud"
-	"github.com/huyinghuan/ddns/config"
 	"github.com/huyinghuan/ddns/myip"
 )
 
@@ -28,17 +27,13 @@ func main() {
 	var username, token string
 	//  域名
 	var domainName string
-
 	var cloudName string
 
 	flag.StringVar(&cloudName, "cloud", "aliyun", "[可选]域名服务商，支持: aliyun name.com , 默认为aliyun")
-
 	flag.StringVar(&accessId, "accessId", "", "阿里云access id")
 	flag.StringVar(&accessKey, "accessKey", "", "阿里云access key")
-
 	flag.StringVar(&username, "username", "", "name.com 用户名")
 	flag.StringVar(&token, "token", "", "name.com token")
-
 	flag.StringVar(&domainName, "domain", "", "目标域名, 多个域名用逗号隔开")
 
 	var fresh int
@@ -69,12 +64,12 @@ func main() {
 		targetDomainList = append(targetDomainList, item)
 	}
 
-	conf := config.Config{
-		Aliyun: config.AliyunConfig{
+	conf := cloud.Config{
+		Aliyun: cloud.AliyunConfig{
 			AccessKeyID:     accessId,
 			AccessKeySecret: accessKey,
 		},
-		NameCom: config.NameComConfig{
+		NameCom: cloud.NameComConfig{
 			Username: username,
 			Token:    token,
 		},
@@ -95,6 +90,8 @@ func main() {
 			log.Fatalln("关键参数不能为空: username, token")
 		}
 		cloudServer = cloud.CreateNameCom(conf.NameCom)
+	} else if cloudName == "dnspod" {
+
 	} else {
 		log.Fatalln("不支持该域名服务商")
 	}
