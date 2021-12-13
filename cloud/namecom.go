@@ -35,7 +35,7 @@ type InsideNameCom struct {
 }
 
 var client = http.Client{
-	Timeout: 3 * time.Second,
+	Timeout: 30 * time.Second,
 }
 
 func (cloud *InsideNameCom) GetDomainRecords(domain string) ([]Domain, error) {
