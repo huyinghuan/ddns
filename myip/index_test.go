@@ -11,4 +11,5 @@ func TestMyIP(t *testing.T) {
 
 func TestIsIP(t *testing.T) {
 	t.Log(isIP("175.11.14.161"))
+	t.Log(isIP("240e:381:e04:2a00:1e69:7aff:fea3:f75c"))
 }

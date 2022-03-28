@@ -9,7 +9,7 @@ import (
 )
 
 func isIP(ip string) bool {
-	return net.ParseIP(ip) != nil
+	return net.ParseIP(ip).To4() != nil
 }
 
 // https://jsonip.com/
