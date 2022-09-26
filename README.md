@@ -32,6 +32,8 @@ env GOOS=linux GOARCH=amd64 go build -o myddns -mod=vendor
 
 部署在家庭局域网内任意服务器上【树莓派或者路由器】。
 
+### 通过命令行参数启动
+
 查看帮助:
 
 ```
@@ -66,9 +68,21 @@ token： token 见: https://www.name.com/zh-cn/account/settings/api
 
 domain:  需要解析的域名 #必须
 refresh: 刷新检查ip间隔 30s #可选
+
 ```
 
-  可以使用`systemd`进行进程管理, 新建文件`/etc/systemd/system/myddns.service`
+### 通过配置文件启动
+
+
+```
+./myddns --config /etc/myddns.json 
+# 或者相对路径
+./myddns --config conf.json 
+```
+
+### 开机启动
+
+可以使用`systemd`进行进程管理, 新建文件`/etc/systemd/system/myddns.service`
   
 ```
 [Unit]

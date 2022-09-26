@@ -87,9 +87,33 @@ func getMyIP2() (string, error) {
 	return "", fmt.Errorf("解析接口结果失败:%v", result["ip"])
 }
 
-func GetMyIP() string {
+func getIpFromCustomServer(api string) (string, error) {
+	if api == "" {
+		return "", fmt.Errorf("ip api get server empty")
+	}
+	resp, err := http.Get(api)
+	if err != nil {
+		return "", err
+	}
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("自定义接口获取ip失败: %d", resp.StatusCode)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err == nil {
+		return "", err
+	}
+	if isIP(string(body)) {
+		return string(body), nil
+	}
+	return "", fmt.Errorf("ip格式错误:%s", string(body))
+}
+func GetMyIP(api string) string {
+
 	ip := ""
-	if ipAddr, err := getMyIP(); err == nil {
+	if ipAddr, err := getIpFromCustomServer(api); err == nil {
+		ip = ipAddr
+	} else if ipAddr, err := getMyIP(); err == nil {
 		ip = ipAddr
 	} else if ipAddr, err = getMyIP1(); err == nil {
 		ip = ipAddr

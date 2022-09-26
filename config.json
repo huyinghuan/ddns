@@ -1,0 +1,27 @@
+{
+    "cloud": {
+        "aliyun": {
+            "accessId": "",
+            "accessKey": ""
+        },
+        "name": {
+            "username": "",
+            "token": ""
+        },
+        "dnspod": {
+            "id": "",
+            "loginToken": ""
+        }
+    },
+    "domains": {
+        "aliyun": [
+            "xxxx.com"
+        ],
+        "name": [
+            "xxx.com"
+        ]
+    },
+    "fresh": 30,
+    "getIpApi": "",
+    "debug": true
+}
